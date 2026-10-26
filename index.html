@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>고장 난 타임머신</title>
-<link rel="stylesheet" href="css/game.css?v=2">
+<link rel="stylesheet" href="css/game.css?v=3">
 </head>
 <body data-screen="home">
 <canvas id="cv"></canvas>
@@ -44,7 +44,7 @@
 
 <!-- 게임 -->
 <section class="scr" id="play">
-  <div class="stage"><span class="seal" id="devNo">단계1/6</span><span id="devName">전선 상자</span></div>
+  <div class="stage"><span class="seal" id="devNo">단계1/6</span><span id="devName">전선 상자</span><button class="how-q" id="btnHow" aria-label="장치 설명서 보기">?</button></div>
   <div class="energy" id="energy">시간 에너지 <b></b><b></b><b></b><b></b><b></b></div>
   <div class="clock" id="clock">0:00</div>
   <div class="slot-tabs" id="slotTabs"></div>
@@ -59,6 +59,15 @@
   </div>
   <div class="b-side"><div class="book" id="book"></div></div>
   <div class="waiting" id="waiting"><b>✓</b><span id="waitingText">우리 장치는 고쳤어요!</span></div>
+  <!-- 장치 설명서 (그림 한 장) -->
+  <div class="how" id="how">
+    <div class="how-card">
+      <div class="how-top"><span class="how-tag">장치 설명서</span><h2 id="howName"></h2><p id="howSum"></p></div>
+      <div class="how-pic" id="howPic"></div>
+      <ol class="how-steps" id="howSteps"></ol>
+      <div class="row"><button class="ghost" id="howOff">다음부터 안 보기</button><button class="go" id="howOk">알겠어요!</button></div>
+    </div>
+  </div>
   <div class="toast" id="toast"></div>
 </section>
 
@@ -76,19 +85,33 @@
   </div>
 </section>
 
+<!-- 옵션 -->
+<button class="opt-btn ghost" id="btnOpt" aria-label="옵션">⚙ 옵션</button>
+<div class="opts" id="opts">
+  <div class="card">
+    <h2>옵션</h2>
+    <div class="opt-row"><span>게임 전 장치 설명서<small>장치가 처음 나올 때 그림 설명서를 보여 줘요</small></span><button class="toggle" id="optHow">켜짐</button></div>
+    <div class="row"><button class="go" id="optClose">닫기</button></div>
+  </div>
+</div>
+
 <div id="netErr"></div>
 
 <script src="lib/three.min.js"></script>
 <script src="js/toy.js"></script>
 <script src="js/props.js"></script>
 <script src="js/joseon-models.js"></script>
-<script src="js/scene.js?v=2"></script>
-<script src="js/icons.js?v=2"></script>
-<script src="js/relics.js?v=2"></script>
-<script src="js/dev-wires.js?v=2"></script>
-<script src="js/dev-net.js?v=2"></script>
-<script src="js/dev-outside.js?v=2"></script>
-<script src="js/dev-door.js?v=2"></script>
-<script type="module" src="js/app.js?v=2"></script>
+<script src="js/scene.js?v=3"></script>
+<script src="js/icons.js?v=3"></script>
+<script src="js/relics.js?v=3"></script>
+<script src="js/dev-wires.js?v=3"></script>
+<script src="js/dev-net.js?v=3"></script>
+<script src="js/dev-outside.js?v=3"></script>
+<script src="js/dev-door.js?v=3"></script>
+<script src="js/dev-round.js?v=3"></script>
+<script src="js/dev-flash.js?v=3"></script>
+<script src="js/dev-maze.js?v=3"></script>
+<script src="js/dev-new2.js?v=3"></script>
+<script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>
