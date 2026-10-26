@@ -106,12 +106,14 @@ export function pairsOf(cells, icons) {
     .join('|');
 }
 
-export function make(seed, level) {
+export const cardsOf = (level, tier) => (level === 'mid' || tier >= 2 ? 4 : 3); // 견습도 뒤 단계는 4장
+
+export function make(seed, level, tier) {
   const R = rng(seed);
   const icons = shuffle(R, ICONS);
   const cube = Object.fromEntries(FACES.map((f, i) => [f, icons[i]])); // 상자 면 → 그림
   const truth = ['U', 'N', 'E'].map((a) => [cube[a], cube[OPP[a]]].sort().join('-')).sort().join('|');
-  const n = level === 'mid' ? 4 : 3;
+  const n = cardsOf(level, tier);
   const answer = Math.floor(R() * n);
   const cands = [];
   const usedPairs = new Set([truth]);

@@ -1,12 +1,13 @@
-// app.js — 화면 흐름: 처음 → 방 만들기/들어가기 → 모이는 곳 → 게임 3단계 → 끝
+// app.js — 화면 흐름: 처음 → 방 만들기/들어가기 → 모이는 곳 → 게임 6단계 + 시간의 문 → 탈출(떠오름) → 끝
 // 서버에는 누를 때만 쓴다(방 만들기, 들어가기, 출발, 답 넣기, 한 판 더). 퍼즐은 씨앗으로 각자 만든다.
-// 2명: 장치 하나씩. 3~4명: 두 쌍이 장치 두 개를 동시에(단계마다 짝이 바뀜). puzzles/plan.js 참고.
+// 2명: 장치 하나씩. 3~4명: 두 쌍이 장치 두 개를 동시에(단계마다 짝이 바뀜). 마지막 문은 모두 함께. puzzles/plan.js 참고.
 import { B } from './net.js';
-import { makePlan, roster, ROLE_NAME, DEVICE_NAME, STAGES, KINDS } from './puzzles/plan.js';
+import { makePlan, roster, ROLE_NAME, DEVICE_NAME, STAGES, NORMAL, RECHARGE, KINDS } from './puzzles/plan.js';
 import { HEX, COUNTS } from './puzzles/wires.js';
 import { SIZE as STAR_SIZE, key as starKey } from './puzzles/stars.js';
 import { ICON_NAME } from './puzzles/net.js';
 import { ERAS, SYMBOLS, SYMBOL_NAME, relic } from './puzzles/era.js';
+import { ALL as DOOR_ROLES, PICS, PIC_NAME, LAMP_NAME, LAMP_HEX, METAL_NAME, MOVES } from './puzzles/door.js';
 
 const $ = (id) => document.getElementById(id);
 const S = JK.Scene;
@@ -101,6 +102,7 @@ function leave() {
 }
 function goHome() {
   clearDevices();
+  S.land();
   screen('home');
   S.setView('home');
 }
@@ -126,11 +128,25 @@ function onRoom(room) {
   }
   st.roles = (room.roster && room.roster[st.uid]) || [];
   if (room.status === 'play' || (prev && prev.status === 'play')) showPlay(room);
-  if (room.status === 'win' || room.status === 'lose') setTimeout(() => st.room && st.room.status === room.status && showEnd(st.room), 2000);
+  if ((room.status === 'win' || room.status === 'lose') && st.endFor !== pk) {
+    st.endFor = pk;
+    const still = () => st.room && st.room.status === room.status && st.endFor === pk;
+    if (room.status === 'lose') setTimeout(() => still() && showEnd(st.room), 2000);
+    else
+      setTimeout(() => {
+        if (!still()) return;
+        // 탈출: 타임머신이 빛나며 떠오른 뒤 끝 카드
+        clearDevices();
+        screen('fly');
+        S.launch();
+        setTimeout(() => still() && showEnd(st.room), HOLD ? 3000 : 5200);
+      }, 1900);
+  }
 }
 
 function showLobby(room) {
   clearDevices();
+  S.land();
   screen('lobby');
   S.setView('lobby');
   $('lobbyCode').textContent = room.code;
@@ -151,6 +167,8 @@ function showLobby(room) {
 // 이번 단계에서 내가 맡은 장치들: [{ k, d, side }]
 function myDevices(room) {
   const stage = st.plan[Math.min(room.stage, STAGES - 1)];
+  // 시간의 문: 장치는 하나, 내가 맡은 역할마다 단서 화면이 하나씩 (side = 역할)
+  if (stage[0].kind === 'door') return DOOR_ROLES.filter((r) => st.roles.includes(r)).map((r) => ({ k: 0, d: stage[0], side: r }));
   const out = [];
   stage.forEach((d, k) => {
     if (st.roles.includes(d.A)) out.push({ k, d, side: 'A' });
@@ -164,6 +182,9 @@ const isSolved = (room, s, k) => !!(room.solved && room.solved[solvedKey(s, k)])
 function mateOf(d, side) {
   return ROLE_NAME[side === 'A' ? d.B : d.A];
 }
+// 이 화면에서 내가 맡은 역할
+const roleOf = (m) => (m.d.kind === 'door' ? m.side : m.side === 'A' ? m.d.A : m.d.B);
+const stageLabel = (s) => (s >= NORMAL ? '마지막 문' : `단계${s + 1}/${NORMAL}`);
 
 function showPlay(room) {
   if (document.body.dataset.screen !== 'play') screen('play');
@@ -197,14 +218,16 @@ function refreshStatus(room) {
   const s = Math.min(room.stage, STAGES - 1);
   const mine = myDevices(room);
   const cur = mine[st.focus] || mine[0];
-  $('devNo').textContent = `단계${s + 1}/${STAGES}`;
+  $('devNo').textContent = stageLabel(s);
   $('devName').textContent = cur ? DEVICE_NAME[cur.d.kind] : '';
-  // 내가 두 장치를 맡으면(3명일 때 기록관·기술자) 위에 고르는 칸
+  document.body.classList.toggle('final', s >= NORMAL);
+  // 내가 두 장치(또는 문 단서 둘)를 맡으면 위에 고르는 칸
   const tabs = $('slotTabs');
   tabs.innerHTML = '';
   if (mine.length > 1)
     mine.forEach((m, i) => {
-      const b = el('button', i === st.focus ? 'on' : '', `${ROLE_NAME[m.side === 'A' ? m.d.A : m.d.B]}: ${DEVICE_NAME[m.d.kind]}${isSolved(room, s, m.k) ? ' ✓' : ''}`);
+      const label = m.d.kind === 'door' ? `${ROLE_NAME[m.side]} 단서` : `${ROLE_NAME[roleOf(m)]}: ${DEVICE_NAME[m.d.kind]}${isSolved(room, s, m.k) ? ' ✓' : ''}`;
+      const b = el('button', i === st.focus ? 'on' : '', label);
       b.onclick = () => {
         st.focus = i;
         renderFocus(st.room);
@@ -236,10 +259,24 @@ function renderFocus(room) {
   st.sel = -1;
   if (!m) return;
   const { d, side } = m;
-  document.body.dataset.side = side;
+  const role = roleOf(m);
   document.body.dataset.kind = d.kind;
-  $('meChip').querySelector('em').textContent = ROLE_NAME[side === 'A' ? d.A : d.B];
-  $('meChip').className = 'me ' + (side === 'A' ? d.A : d.B);
+  document.body.dataset.role = role;
+  $('meChip').querySelector('em').textContent = ROLE_NAME[role];
+  $('meChip').className = 'me ' + role;
+  if (d.kind === 'door') {
+    // 시간의 문: 조종사·탐험가는 3D(아래 칸), 기록관·기술자는 카드
+    const a = role === 'pilot' || role === 'explorer';
+    document.body.dataset.side = a ? 'A' : 'B';
+    $('mate').textContent = st.room.n > 2 ? '모두 함께 열어요' : '둘이 단서를 두 개씩 가졌어요';
+    if (role === 'pilot') JK.Devices.door.build(d.inst);
+    if (role === 'explorer') JK.Devices.gate.build(d.inst);
+    S.setView({ pilot: 'device', explorer: 'window', reader: 'reader', tech: 'tech' }[role]);
+    if (a) renderA(m);
+    else renderB(m);
+    return;
+  }
+  document.body.dataset.side = side;
   $('mate').textContent = `짝: ${mateOf(d, side)}`;
   if (side === 'A') {
     const dev = JK.Devices[d.kind];
@@ -260,13 +297,23 @@ const TASK = {
   starsPoint: ['별자리 반쪽이 어디에 있는지 <em>기술자</em>에게 설명해요', '빨간 점이 대칭의 중심이에요. 기술자가 나머지 반쪽 별을 켜요'],
   net: ['상자를 <em>끌어서 돌려 보고</em>, 그림을 기술자에게 설명해요', '기술자가 이 상자를 펼친 전개도를 찾아요'],
   era: ['창밖 유물의 <em>생김새</em>를 기록관에게 설명해요', '기록관이 알려 주는 기호를 1번 유물부터 차례로 눌러요'],
+  doorPilot: ['문 위 <em>불빛이 무슨 색</em>인지 기록관에게 알려 줘요', '기술자가 불러 주는 번호 4개를 차례로 누르고 문을 열어요'],
+  doorExplorer: ['돌판 그림 4개를 <em>1번부터 차례로</em> 기록관에게 말해 줘요', '모두가 단서를 하나씩 가졌어요. 다 같이 말해야 열려요'],
+  doorExplorerMid: ['돌판 그림 4개를 <em>1번부터 차례로</em> 기록관에게 말해 줘요', '문 테두리가 <em>금색인지 은색인지</em> 기술자에게도 알려 줘요'],
 };
+function taskOf(m) {
+  const k = m.d.kind;
+  if (k === 'stars' && m.d.inst.mode === 'point') return TASK.starsPoint;
+  if (k === 'door') return m.side === 'pilot' ? TASK.doorPilot : m.d.inst.level === 'mid' ? TASK.doorExplorerMid : TASK.doorExplorer;
+  return TASK[k];
+}
 function renderA(m) {
-  const t = TASK[m.d.kind === 'stars' && m.d.inst.mode === 'point' ? 'starsPoint' : m.d.kind];
+  const t = taskOf(m);
   $('taskK').innerHTML = t[0];
   $('taskP').innerHTML = t[1];
   const bar = $('eraBar');
   bar.innerHTML = '';
+  if (m.d.kind === 'door' && m.side === 'pilot') return doorKeys(bar, m);
   if (m.d.kind === 'era') {
     const n = m.d.inst.relics.length;
     st.ui.seq = st.ui.seq || [];
@@ -301,12 +348,111 @@ function renderA(m) {
   }
 }
 
+// 시간의 문 번호 단추 (조종사)
+function doorKeys(bar, m) {
+  st.ui.code = st.ui.code || [];
+  const slots = el('div', 'era-slots door-slots');
+  for (let i = 0; i < 4; i++) slots.appendChild(el('span', 'era-slot', `<small>${i + 1}</small>${st.ui.code[i] != null ? `<b>${st.ui.code[i]}</b>` : ''}`));
+  bar.appendChild(slots);
+  const keys = el('div', 'door-keys');
+  for (let n = 1; n <= 9; n++) {
+    const b = el('button', '', String(n));
+    b.dataset.n = n;
+    b.onclick = () => {
+      if (st.ui.code.length < 4) st.ui.code.push(n);
+      renderA(m);
+    };
+    keys.appendChild(b);
+  }
+  bar.appendChild(keys);
+  const ctl = el('div', 'era-ctl');
+  const clr = el('button', 'ghost', '지우기');
+  clr.onclick = () => {
+    st.ui.code = [];
+    renderA(m);
+  };
+  const go = el('button', 'go', '문 열기');
+  go.id = 'doorGo';
+  go.disabled = st.ui.code.length < 4;
+  go.onclick = () => act(m, { code: st.ui.code.slice() });
+  ctl.append(clr, go);
+  bar.appendChild(ctl);
+}
+
 /* ---------- B 쪽(설명서·판을 가진 사람) ---------- */
 function renderB(m) {
   const book = $('book');
   book.innerHTML = '';
   book.className = 'book ' + m.d.kind;
+  if (m.d.kind === 'door') return (m.side === 'reader' ? bookDoorRule : bookDoorTable)(book, m);
   ({ wires: bookWires, stars: bookStars, net: bookNet, era: bookEra })[m.d.kind](book, m);
+}
+
+// 시간의 문 — 기록관: 불빛 색마다 그림 차례 바꾸는 규칙 + 받아 적는 칸
+const CIRC = ['①', '②', '③', '④'];
+function bookDoorRule(book, m) {
+  const I = m.d.inst;
+  head(book, '시간의 문 규칙 카드', '① 탐험가에게 <b>돌판 그림 차례</b>를, 조종사에게 <b>불빛 색</b>을 물어봐요. ② 그 색 줄대로 차례를 바꿔서 <b>기술자</b>에게 알려 줘요.');
+  const ol = el('ol', 'm-rules door-rules');
+  I.lamps.forEach((l) => {
+    const mv = MOVES[I.rule[l]];
+    const li = el('li', '', `<span class="lampdot" style="--c:${LAMP_HEX[l]}"></span><span class="c">불빛이 <b>${LAMP_NAME[l]}색</b>이면</span><span class="ar">→</span><span class="a">${mv.text}<small>${CIRC.join('')} → ${mv.how.map((i) => CIRC[i]).join('')}</small></span>`);
+    li.onclick = () => {
+      ol.querySelectorAll('li').forEach((x) => x.classList.remove('mark'));
+      li.classList.add('mark');
+    };
+    ol.appendChild(li);
+  });
+  book.appendChild(ol);
+  // 받아 적기: 탐험가가 말한 그림을 눌러 차례대로 적어 둔다(바꾸기는 직접)
+  st.ui.memo = st.ui.memo || [];
+  const memo = el('div', 'door-memo');
+  const draw = () => {
+    memo.innerHTML = '<span class="lab">받아 적기</span>';
+    const slots = el('div', 'era-slots');
+    for (let i = 0; i < 4; i++) {
+      const p = st.ui.memo[i];
+      slots.appendChild(el('span', 'era-slot', `<small>${i + 1}</small>${p ? `<img src="${JK.iconURL(p, 64)}" alt="${PIC_NAME[p]}">` : ''}`));
+    }
+    memo.appendChild(slots);
+    const keys = el('div', 'memo-keys');
+    for (const p of PICS) {
+      const b = el('button', '', `<img src="${JK.iconURL(p, 48)}" alt=""><span>${PIC_NAME[p]}</span>`);
+      b.onclick = () => {
+        if (st.ui.memo.length < 4) st.ui.memo.push(p);
+        draw();
+      };
+      keys.appendChild(b);
+    }
+    const clr = el('button', 'ghost', '지우기');
+    clr.onclick = () => {
+      st.ui.memo = [];
+      draw();
+    };
+    memo.append(keys, clr);
+  };
+  draw();
+  book.appendChild(memo);
+}
+
+// 시간의 문 — 기술자: 그림마다 부품 번호 (숙련은 금색 줄·은색 줄)
+function bookDoorTable(book, m) {
+  const I = m.d.inst;
+  const mid = I.level === 'mid';
+  head(
+    book,
+    '부품 번호표',
+    mid
+      ? '탐험가에게 문 테두리가 <b>금색인지 은색인지</b> 묻고, 그 줄에서 기록관이 알려 주는 그림 차례대로 <b>번호</b>를 찾아 조종사에게 불러 줘요.'
+      : '기록관이 알려 주는 그림 차례대로 <b>번호</b>를 찾아 조종사에게 불러 줘요.'
+  );
+  const tb = el('table', 'door-table');
+  let html = '<tr><th></th>' + PICS.map((p) => `<th><img src="${JK.iconURL(p, 64)}" alt=""><span>${PIC_NAME[p]}</span></th>`).join('') + '</tr>';
+  for (const metal of Object.keys(I.table)) html += `<tr><th class="metal ${metal}">${mid ? METAL_NAME[metal] + ' 줄' : '번호'}</th>` + PICS.map((p) => `<td>${I.table[metal][p]}</td>`).join('') + '</tr>';
+  tb.innerHTML = html;
+  tb.querySelectorAll('td').forEach((td) => (td.onclick = () => td.classList.toggle('mark')));
+  book.appendChild(tb);
+  book.appendChild(el('p', 'legend', '번호 칸을 누르면 표시해 둘 수 있어요'));
 }
 function head(book, title, text) {
   book.appendChild(el('div', 'm-head', `<h2>${title}</h2><p>${text}</p>`));
@@ -484,6 +630,8 @@ async function act(m, payload) {
         if (all) {
           if (s >= STAGES - 1) Object.assign(next, { status: 'win', endedAt: Date.now() });
           else next.stage = s + 1;
+          // 두 단계마다 시간 에너지 1칸 충전 (5칸까지)
+          if (RECHARGE.includes(s)) next.energy = Math.min(ENERGY, cur.energy + 1);
         }
       } else {
         next.energy = cur.energy - 1;
@@ -504,10 +652,12 @@ function playAct(a, room) {
   const name = DEVICE_NAME[d.kind];
   st.busy = true;
   if (mine && mine.side === 'A' && d.kind === 'wires' && myDevices(room)[st.focus]?.k === a.k) JK.Devices.wires.pull(a.a.i, a.ok);
+  if (d.kind === 'door' && a.s === st.shownStage && document.body.dataset.role === 'pilot') JK.Devices.door.react(a.ok);
   if (a.ok) {
     const stageDone = st.plan[a.s].every((_, k) => isSolved(room, a.s, k));
     const last = stageDone && a.s >= STAGES - 1;
-    setTimeout(() => toast(last ? '다 고쳤어요!' : stageDone ? `${name} 고쳤어요!<small>다음 단계로 가요</small>` : `${name} 고쳤어요!`, 'good', 1500), 400);
+    const next = stageDone && a.s === NORMAL - 1 ? '이제 마지막 시간의 문이에요!' : RECHARGE.includes(a.s) && stageDone ? '시간 에너지 1칸이 다시 찼어요' : '다음 단계로 가요';
+    setTimeout(() => toast(last ? '시간의 문이 열렸어요!' : stageDone ? `${name} 고쳤어요!<small>${next}</small>` : `${name} 고쳤어요!`, 'good', 1500), 400);
   } else {
     setTimeout(() => {
       toast(`찌릿! ${name}에서 틀렸어요<small>시간 에너지가 하나 줄었어요</small>`, 'bad', 1700);
@@ -518,6 +668,12 @@ function playAct(a, room) {
         // 틀린 것 표시: 전개도는 ✗, 시대 다이얼은 지움
         if (d.kind === 'net') st.ui.wrong = (st.ui.wrong || new Set()).add(a.a.pick);
         if (d.kind === 'era') st.ui.seq = [];
+        if (d.kind === 'door') {
+          // 문은 다시 짓지 않는다(덜컹 움직임이 이어지게): 번호 칸만 비운다
+          st.ui.code = [];
+          const pm = myDevices(st.room)[st.focus];
+          if (pm && pm.side === 'pilot') renderA(pm);
+        }
         if (d.kind === 'net' || d.kind === 'era') {
           st.sel = -1;
           renderFocus(st.room);
@@ -560,15 +716,16 @@ $('btnCancel').onclick = () => {
 function showEnd(room) {
   clearDevices();
   screen('result');
-  S.setView('home');
   const sec = Math.round(((room.endedAt || Date.now()) - room.startedAt) / 1000);
   const time = `${Math.floor(sec / 60)}분 ${sec % 60}초`;
   if (room.status === 'win') {
+    if (document.body.dataset.view !== 'fly') S.launch(); // 새로 고침으로 바로 끝 화면에 온 경우
     $('endTitle').textContent = '탈출 성공!';
-    $('endText').textContent = `${STAGES}단계를 다 고쳤어요. 걸린 시간 ${time}, 남은 시간 에너지 ${room.energy}칸`;
+    $('endText').textContent = `${NORMAL}단계와 시간의 문까지 다 고쳤어요. 걸린 시간 ${time}, 남은 시간 에너지 ${room.energy}칸`;
   } else {
+    S.setView('home');
     $('endTitle').textContent = '시간 에너지가 다 떨어졌어요';
-    $('endText').textContent = `${room.stage}단계까지 고쳤어요. 설명을 차근차근 주고받으면 할 수 있어요!`;
+    $('endText').textContent = (room.stage >= NORMAL ? `${NORMAL}단계를 다 고치고 시간의 문 앞까지 갔어요.` : `${room.stage}단계까지 고쳤어요.`) + ' 설명을 차근차근 주고받으면 할 수 있어요!';
   }
 }
 
@@ -635,6 +792,7 @@ setInterval(() => {
 }, 500);
 
 /* ---------- 시험 도구용 ---------- */
+st.STAGES = STAGES;
 st.mine = () => myDevices(st.room).map((m) => ({ k: m.k, kind: m.d.kind, side: m.side, actor: m.d.actor, solved: isSolved(st.room, st.room.stage, m.k) }));
 st.solution = (k) => KINDS[st.plan[st.room.stage][k].kind].solve(st.plan[st.room.stage][k].inst);
 st.focusOn = (k) => {

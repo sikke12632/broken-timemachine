@@ -8,7 +8,7 @@ button { font-family: inherit; cursor: pointer; }
 .scr { position: fixed; inset: 0; display: none; pointer-events: none; }
 .scr > * { pointer-events: auto; }
 body[data-screen="home"] #home, body[data-screen="join"] #join, body[data-screen="lobby"] #lobby,
-body[data-screen="play"] #play, body[data-screen="result"] #result { display: block; }
+body[data-screen="play"] #play, body[data-screen="result"] #result, body[data-screen="fly"] #fly { display: block; }
 body[data-screen="join"] #home { display: none; }
 
 /* 단추 */
@@ -81,7 +81,7 @@ button.ghost { font-size: 17px; padding: 9px 18px; border-radius: 999px; border:
 .a-side, .b-side { display: none; }
 body[data-side="A"] .a-side, body[data-side="B"] .b-side { display: block; }
 body[data-side="A"]:not([data-kind="wires"]) .confirm { display: none; }
-body[data-kind="era"] .task { bottom: 118px; }
+body[data-kind="era"] .task, body[data-kind="door"][data-role="pilot"] .task { bottom: 118px; }
 
 /* 조종사 아래 */
 .task { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(560px, 62vw); background: var(--cream); border-radius: 18px; padding: 10px 20px; box-shadow: 0 6px 18px rgba(60,40,20,.25); border-bottom: 4px solid var(--brass); text-align: center; }
@@ -120,12 +120,13 @@ body[data-kind="era"] .task { bottom: 118px; }
 
 /* 끝 */
 .end h2 { font-size: 44px; }
+body[data-view="fly"] #result .card { top: auto; bottom: 26px; transform: translateX(-50%); }
 .end p { font-size: 19px; color: var(--brown); margin: 0 0 6px; }
 #netErr { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); background: #8e2f24; color: #fff; padding: 6px 14px; border-radius: 999px; font-size: 15px; display: none; z-index: 9; }
 #netErr.on { display: block; }
 
 /* 시대 다이얼 단추 (탐험가) */
-.era-bar { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px; background: var(--paper); padding: 10px 16px; border-radius: 20px; box-shadow: 0 6px 18px rgba(60,40,20,.3); }
+.era-bar { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; display: flex; align-items: center; gap: 14px; background: var(--paper); padding: 10px 16px; border-radius: 20px; box-shadow: 0 6px 18px rgba(60,40,20,.3); }
 .era-bar:empty { display: none; }
 .era-slots { display: flex; gap: 6px; }
 .era-slot { position: relative; width: 56px; height: 56px; border-radius: 12px; background: #fff; border: 3px dashed #d8c49a; display: grid; place-items: center; }
@@ -136,6 +137,40 @@ body[data-kind="era"] .task { bottom: 118px; }
 .era-keys button img { width: 38px; height: 38px; }
 .era-keys button:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a2322; }
 .era-ctl { display: flex; flex-direction: column; gap: 6px; }
+
+/* 시간의 문 (마지막 단계) */
+body.final .stage .seal { background: #7a4fb0; padding: 0 10px; }
+.door-slots .era-slot b { font-family: 'TMTitle', serif; font-weight: normal; font-size: 34px; color: #2a1d16; }
+.door-keys { display: grid; grid-template-columns: repeat(9, 48px); gap: 6px; }
+.door-keys button { height: 56px; border: 0; border-radius: 12px; background: #2f3b3a; color: #f3d58a; font-family: 'TMTitle', serif; font-size: 28px; box-shadow: 0 4px 0 #1a2322; }
+.door-keys button:active { transform: translateY(3px); box-shadow: 0 1px 0 #1a2322; }
+.door-rules { overflow: visible; gap: 5px; }
+.door-rules li { cursor: pointer; padding: 5px 12px; font-size: 19px; }
+.door-rules .lampdot { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c), inset 0 -3px 0 rgba(0,0,0,.2); }
+.door-rules .c { flex: 0.8; }
+.door-rules .a { flex: 1.4; }
+.door-rules .a small { display: block; font-family: 'TMBody', sans-serif; font-size: 15px; color: #6b5440; letter-spacing: .06em; }
+.door-memo { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 6px 10px; background: rgba(255,255,255,.55); border-radius: 14px; }
+.door-memo .lab { font-family: 'TMTitle', serif; font-size: 17px; color: var(--brown); white-space: nowrap; }
+.door-memo .era-slots { gap: 4px; }
+.door-memo .era-slot { width: 42px; height: 42px; }
+.door-memo .era-slot img { width: 34px; height: 34px; }
+.door-memo .ghost { padding: 6px 12px; font-size: 15px; white-space: nowrap; }
+.memo-keys { display: flex; gap: 4px; }
+.memo-keys button { display: flex; flex-direction: column; align-items: center; width: 46px; padding: 2px 0; border: 0; border-radius: 10px; background: #efe2c2; color: #5a4636; font-size: 12px; box-shadow: 0 3px 0 #cdb88c; }
+.memo-keys button img { width: 30px; height: 30px; }
+.door-table { border-collapse: separate; border-spacing: 6px; margin: 4px auto 6px; }
+.door-table th { font-weight: normal; font-size: 16px; color: var(--brown); }
+.door-table th img { display: block; width: 56px; height: 56px; margin: 0 auto; background: #fbf6ea; border-radius: 12px; border: 2px solid #d8c49a; }
+.door-table th.metal { font-family: 'TMTitle', serif; font-size: 19px; padding: 0 10px; border-radius: 12px; color: #2a1d16; }
+.door-table th.metal.gold { background: linear-gradient(#f6d27a, #d9a441); }
+.door-table th.metal.silver { background: linear-gradient(#eef1f4, #b9c0c8); }
+.door-table td { width: 64px; height: 56px; text-align: center; font-family: 'TMTitle', serif; font-size: 32px; background: #fff; border-radius: 12px; border: 2px solid #e6d4ac; cursor: pointer; }
+.door-table td.mark { background: #d8eedb; border-color: #2a8a4e; }
+.fly-title { position: absolute; left: 50%; top: 34px; transform: translateX(-50%); text-align: center; pointer-events: none; animation: flyin .8s ease-out; }
+.fly-title h2 { margin: 0; font-family: 'TMTitle', serif; font-weight: normal; font-size: 52px; color: #2a1d16; text-shadow: 0 3px 0 rgba(255,255,255,.7), 0 0 26px rgba(255,248,230,.95); }
+.fly-title p { margin: 4px 0 0; display: inline-block; font-size: 20px; color: var(--brown); background: rgba(248,240,222,.8); padding: 3px 16px; border-radius: 999px; }
+@keyframes flyin { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* 별자리 판 (기술자) */
 .star-wrap { display: flex; align-items: stretch; justify-content: center; gap: 14px; margin: 4px auto 10px; }

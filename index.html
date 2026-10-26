@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>고장 난 타임머신</title>
-<link rel="stylesheet" href="css/game.css?v=1">
+<link rel="stylesheet" href="css/game.css?v=2">
 </head>
 <body data-screen="home">
 <canvas id="cv"></canvas>
@@ -44,7 +44,7 @@
 
 <!-- 게임 -->
 <section class="scr" id="play">
-  <div class="stage"><span class="seal" id="devNo">단계1/3</span><span id="devName">전선 상자</span></div>
+  <div class="stage"><span class="seal" id="devNo">단계1/6</span><span id="devName">전선 상자</span></div>
   <div class="energy" id="energy">시간 에너지 <b></b><b></b><b></b><b></b><b></b></div>
   <div class="clock" id="clock">0:00</div>
   <div class="slot-tabs" id="slotTabs"></div>
@@ -62,6 +62,11 @@
   <div class="toast" id="toast"></div>
 </section>
 
+<!-- 탈출: 타임머신이 떠오름 -->
+<section class="scr" id="fly">
+  <div class="fly-title"><h2>시간의 문이 열렸어요!</h2><p>타임머신이 다시 날아올라요</p></div>
+</section>
+
 <!-- 끝 -->
 <section class="scr" id="result">
   <div class="card end">
@@ -77,12 +82,13 @@
 <script src="js/toy.js"></script>
 <script src="js/props.js"></script>
 <script src="js/joseon-models.js"></script>
-<script src="js/scene.js?v=1"></script>
-<script src="js/icons.js?v=1"></script>
-<script src="js/relics.js?v=1"></script>
-<script src="js/dev-wires.js?v=1"></script>
-<script src="js/dev-net.js?v=1"></script>
-<script src="js/dev-outside.js?v=1"></script>
-<script type="module" src="js/app.js?v=1"></script>
+<script src="js/scene.js?v=2"></script>
+<script src="js/icons.js?v=2"></script>
+<script src="js/relics.js?v=2"></script>
+<script src="js/dev-wires.js?v=2"></script>
+<script src="js/dev-net.js?v=2"></script>
+<script src="js/dev-outside.js?v=2"></script>
+<script src="js/dev-door.js?v=2"></script>
+<script type="module" src="js/app.js?v=2"></script>
 </body>
 </html>

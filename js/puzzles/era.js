@@ -34,11 +34,11 @@ export const RELICS = [
 ];
 export const relic = (id) => RELICS.find((r) => r.id === id);
 
-export function make(seed, level) {
+export function make(seed, level, tier) {
   const R = rng(seed);
   const sym = shuffle(R, SYMBOLS);
   const symbolOf = Object.fromEntries(ERAS.map((e, i) => [e.id, sym[i]]));
-  const n = level === 'mid' ? 4 : 3;
+  const n = (level === 'mid' ? 4 : 3) + (tier >= 2 ? 1 : 0); // 뒤 단계는 유물 하나 더
   // 시대가 최대한 겹치지 않게 고른다
   let relics;
   for (let t = 0; t < 50; t++) {

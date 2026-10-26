@@ -170,16 +170,16 @@
       const S = JK.Scene;
       eRoot = holder();
       const n = inst.relics.length;
-      const gap = n > 3 ? 0.78 : 0.95;
+      const gap = n > 4 ? 0.58 : n > 3 ? 0.78 : 0.95;
       this.items = inst.relics.map((id, i) => {
         const g = new T.Group();
         g.position.set((i - (n - 1) / 2) * gap, -0.22, 0.6);
         const m = JK.Relics.mesh(id);
         m.userData.keepGeo = true;
-        m.scale.setScalar(n > 3 ? 0.62 : 0.72);
+        m.scale.setScalar(n > 4 ? 0.54 : n > 3 ? 0.62 : 0.72);
         g.add(m);
         // 시간 안개 고리
-        const fog = new T.Mesh(new T.TorusGeometry(0.34, 0.05, 6, 24), new T.MeshBasicMaterial({ color: '#e9e2ff', transparent: true, opacity: 0.55 }));
+        const fog = new T.Mesh(new T.TorusGeometry(n > 4 ? 0.28 : 0.34, 0.05, 6, 24), new T.MeshBasicMaterial({ color: '#e9e2ff', transparent: true, opacity: 0.55 }));
         fog.rotation.x = Math.PI / 2;
         fog.position.y = -0.18;
         g.add(fog);

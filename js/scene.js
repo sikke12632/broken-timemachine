@@ -1211,7 +1211,62 @@
       crash: { target: new T.Vector3(0, 1.75, 0.2), dist: 15.5, az: 0.5, el: 0.33, fov: 30, tilt: 1, focusY: 0.5, drag: true },
       pilot: { pos: new T.Vector3(0.0, F + 1.28, 0.05), look: new T.Vector3(0, F + 0.8, -1.6), fov: 62, tilt: 0 },
       team: { target: STAGE.clone().add(new T.Vector3(0, 0.75, 0)), dist: 10, az: 0, el: 0.2, fov: 30, tilt: 0, drag: true, swing: 0.5 },
+      fly: { target: new T.Vector3(0, 1.75, 0.2), dist: 17, az: 0.5, el: 0.2, fov: 32, tilt: 1, spin: 0.05 },
     };
+
+    /* --- 탈출: 타임머신이 빛나며 떠오른다 --- */
+    const fly = { on: false, t0: -1 };
+    const flyRing = new T.Mesh(new T.TorusGeometry(2.2, 0.08, 6, 48), new T.MeshBasicMaterial({ color: '#ffe6a0', transparent: true, depthWrite: false }));
+    flyRing.rotation.x = Math.PI / 2;
+    flyRing.visible = false;
+    world.add(flyRing);
+    const flySparks = new T.Group();
+    const sparkCols = ['#ffe27a', '#9fe8e0', '#ffffff', '#ffc46a'];
+    for (let i = 0; i < 22; i++) {
+      const m = new T.Mesh(new T.OctahedronGeometry(0.09, 0), new T.MeshBasicMaterial({ color: sparkCols[i % 4] }));
+      m.userData = { u: (i / 22) * TAU, r: 2.0 + (i % 3) * 0.3, y: (i % 5) * 0.55, sp: 1.2 + (i % 4) * 0.35 };
+      flySparks.add(m);
+    }
+    flySparks.visible = false;
+    machine.add(flySparks);
+    S.launch = function () {
+      fly.on = true;
+      fly.t0 = -1;
+      flyRing.visible = flySparks.visible = true;
+      S.setView('fly');
+    };
+    S.land = function () {
+      if (!fly.on) return;
+      fly.on = false;
+      machine.position.set(0, 0, 0);
+      machine.rotation.y = 0;
+      VIEWS.fly.target.y = 1.75;
+      flyRing.visible = flySparks.visible = false;
+    };
+    S.frameHooks.push((t) => {
+      if (!fly.on) return;
+      if (fly.t0 < 0) fly.t0 = t;
+      const k = t - fly.t0;
+      const u = JK.clamp((k - 0.9) / 3.4, 0, 1);
+      const e = u * u * (3 - 2 * u);
+      // 처음엔 부르르 떨다가, 빙글 돌며 떠오르고, 하늘에서 둥실
+      machine.position.x = k < 0.9 ? (Math.random() - 0.5) * 0.08 : 0;
+      machine.position.y = e * 5.2 + (u >= 1 ? Math.sin(t * 1.6) * 0.15 : 0);
+      machine.rotation.y = e * TAU + Math.max(0, k - 4.3) * 0.25;
+      VIEWS.fly.target.y = 1.75 + e * 4.6;
+      const rk = JK.clamp((k - 0.8) / 1.4, 0, 1);
+      flyRing.scale.setScalar(0.6 + rk * 3.5);
+      flyRing.position.y = 0.3 + rk * 0.4;
+      flyRing.material.opacity = rk > 0 ? (1 - rk) * 0.9 : 0;
+      for (const m of flySparks.children) {
+        const d = m.userData;
+        const a = d.u + t * d.sp;
+        m.position.set(Math.cos(a) * d.r, 0.4 + ((d.y + t * 0.6) % 2.8), Math.sin(a) * d.r);
+        m.rotation.y = t * 3;
+        m.visible = k > 0.9;
+      }
+      S.shake = 0;
+    });
     let cur = VIEWS[view] ? view : 'home';
     const drag = { az: 0, el: 0, on: false, x: 0, y: 0 };
     const ray = new T.Raycaster(),
