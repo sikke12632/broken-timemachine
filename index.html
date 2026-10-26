@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>고장 난 타임머신</title>
+<link rel="stylesheet" href="css/game.css?v=1">
+</head>
+<body data-screen="home">
+<canvas id="cv"></canvas>
+<div id="labels"></div>
+
+<!-- 처음 화면 -->
+<section class="scr" id="home">
+  <div class="title"><h1>고장 난 타임머신</h1><p>2~4명이 말로 설명하며 고치는 방탈출</p></div>
+  <div class="btns">
+    <button class="big" id="btnMake">팀 방 만들기</button>
+    <button class="big alt" id="btnJoin">팀 방 들어가기</button>
+  </div>
+</section>
+
+<!-- 방 번호 넣기 -->
+<section class="scr" id="join">
+  <div class="card keypad">
+    <h2>방 번호 4자리</h2>
+    <div class="code" id="joinCode"><i></i><i></i><i></i><i></i></div>
+    <div class="keys" id="keys"></div>
+    <p class="err" id="joinErr"></p>
+    <div class="row"><button class="ghost" id="joinBack">뒤로</button><button class="go" id="joinGo" disabled>들어가기</button></div>
+  </div>
+</section>
+
+<!-- 모이는 곳 -->
+<section class="scr" id="lobby">
+  <div class="roomcode"><span>방 번호</span><b id="lobbyCode">0000</b></div>
+  <p class="tip" id="lobbyTip">친구에게 방 번호를 알려 줘요</p>
+  <div class="lobby-bottom">
+    <div class="level" id="levelPick"><button data-l="easy">견습</button><button data-l="mid">숙련</button></div>
+    <button class="ghost" id="btnSwap">역할 바꾸기</button>
+    <button class="go big" id="btnStart" disabled>출발!</button>
+  </div>
+  <button class="corner ghost" id="btnLeave">나가기</button>
+</section>
+
+<!-- 게임 -->
+<section class="scr" id="play">
+  <div class="stage"><span class="seal" id="devNo">단계1/3</span><span id="devName">전선 상자</span></div>
+  <div class="energy" id="energy">시간 에너지 <b></b><b></b><b></b><b></b><b></b></div>
+  <div class="clock" id="clock">0:00</div>
+  <div class="slot-tabs" id="slotTabs"></div>
+  <div class="others" id="others"></div>
+  <div class="me" id="meChip"><span>나</span><em>조종사</em></div>
+  <div class="mate" id="mate">짝: 기록관</div>
+
+  <div class="a-side">
+    <div class="confirm" id="confirm"><span id="confirmText">3번 선을 뽑을까요?</span><button class="go" id="btnPull">뽑기</button><button class="ghost" id="btnCancel">아니요</button></div>
+    <div class="task" id="task"><div class="k" id="taskK"></div><p id="taskP"></p></div>
+    <div class="era-bar" id="eraBar"></div>
+  </div>
+  <div class="b-side"><div class="book" id="book"></div></div>
+  <div class="waiting" id="waiting"><b>✓</b><span id="waitingText">우리 장치는 고쳤어요!</span></div>
+  <div class="toast" id="toast"></div>
+</section>
+
+<!-- 끝 -->
+<section class="scr" id="result">
+  <div class="card end">
+    <h2 id="endTitle">탈출 성공!</h2>
+    <p id="endText"></p>
+    <div class="row"><button class="ghost" id="btnHome">처음으로</button><button class="go" id="btnAgain">한 판 더 (역할 바꿔서)</button></div>
+  </div>
+</section>
+
+<div id="netErr"></div>
+
+<script src="lib/three.min.js"></script>
+<script src="js/toy.js"></script>
+<script src="js/props.js"></script>
+<script src="js/joseon-models.js"></script>
+<script src="js/scene.js?v=1"></script>
+<script src="js/icons.js?v=1"></script>
+<script src="js/relics.js?v=1"></script>
+<script src="js/dev-wires.js?v=1"></script>
+<script src="js/dev-net.js?v=1"></script>
+<script src="js/dev-outside.js?v=1"></script>
+<script type="module" src="js/app.js?v=1"></script>
+</body>
+</html>
