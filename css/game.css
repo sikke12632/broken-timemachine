@@ -125,6 +125,13 @@ body[data-view="fly"] #result .card { top: auto; bottom: 26px; transform: transl
 .end p { font-size: 19px; color: var(--brown); margin: 0 0 6px; }
 #netErr { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); background: #8e2f24; color: #fff; padding: 6px 14px; border-radius: 999px; font-size: 15px; display: none; z-index: 9; }
 #netErr.on { display: block; }
+/* 게임 중 나가기 · 알림 */
+.play-quit { position: absolute; right: 16px; bottom: 18px; font-size: 15px; padding: 7px 16px; }
+.quit-ask { position: absolute; inset: 0; display: none; background: rgba(40,28,18,.45); z-index: 9; }
+.quit-ask.on { display: block; }
+.quit-ask p { margin: 0 0 4px; font-size: 18px; color: var(--brown); }
+#notice { position: fixed; left: 50%; top: 122px; transform: translateX(-50%); display: none; z-index: 9; background: var(--paper); color: #8e2f24; font-family: 'TMTitle', serif; font-size: 20px; padding: 10px 22px; border-radius: 999px; box-shadow: 0 6px 18px rgba(60,40,20,.3); border-bottom: 4px solid var(--brass); white-space: nowrap; }
+#notice.on { display: block; }
 
 /* 시대 다이얼 단추 (탐험가) */
 .era-bar { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; display: flex; align-items: center; gap: 14px; background: var(--paper); padding: 10px 16px; border-radius: 20px; box-shadow: 0 6px 18px rgba(60,40,20,.3); }

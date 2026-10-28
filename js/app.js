@@ -103,9 +103,20 @@ function leave() {
       if (!cur || !cur.players || !cur.players[st.uid]) return null;
       const players = { ...cur.players };
       delete players[st.uid];
+      // 게임 중에 나가면 그 역할의 단서가 사라져 남은 친구들이 풀 수 없다 → 게임을 멈추고 모두 모이는 곳으로
+      if (cur.status === 'play') return { ...cur, at: Date.now(), players, status: 'lobby', acts: [] };
       return { ...cur, at: Date.now(), players };
     }).catch(netErr);
   goHome();
+}
+// 화면 위에 잠깐 뜨는 알림 (모이는 곳에서도 보이게 게임 화면 밖에 있다)
+let noticeT = 0;
+function notice(text) {
+  const n = $('notice');
+  n.textContent = text;
+  n.classList.add('on');
+  clearTimeout(noticeT);
+  noticeT = setTimeout(() => n.classList.remove('on'), HOLD ? 60000 : 5000);
 }
 function goHome() {
   clearDevices();
@@ -124,7 +135,10 @@ function onRoom(room) {
     st.unsub = null;
     return goHome();
   }
-  if (room.status === 'lobby') return showLobby(room);
+  if (room.status === 'lobby') {
+    if (prev && prev.status === 'play') notice('친구가 나가서 게임이 멈췄어요. 모이는 곳으로 돌아왔어요');
+    return showLobby(room);
+  }
   const pk = room.seed + ':' + room.level + ':' + room.n;
   if (st.planKey !== pk) {
     st.planKey = pk;
@@ -1227,6 +1241,16 @@ for (const k of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '지움', '0', '�
 $('joinBack').onclick = goHome;
 $('joinGo').onclick = () => joinRoom(typed).catch(netErr);
 $('btnLeave').onclick = leave;
+// 게임 중 나가기: 한 번 더 묻는다
+$('btnQuit').onclick = () => {
+  $('quitText').textContent = st.room && st.room.n > 1 ? '나가면 게임이 멈추고, 친구들은 모이는 곳으로 돌아가요.' : '';
+  $('quitAsk').classList.add('on');
+};
+$('quitNo').onclick = () => $('quitAsk').classList.remove('on');
+$('quitYes').onclick = () => {
+  $('quitAsk').classList.remove('on');
+  leave();
+};
 $('btnSwap').onclick = () => B.tx(st.code, (cur) => (cur && cur.status === 'lobby' ? { ...cur, swap: (cur.swap || 0) + 1 } : null)).catch(netErr);
 document.querySelectorAll('#levelPick button').forEach(
   (b) => (b.onclick = () => B.tx(st.code, (cur) => (cur && cur.status === 'lobby' ? { ...cur, level: b.dataset.l } : null)).catch(netErr))
